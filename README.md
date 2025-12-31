@@ -1,137 +1,120 @@
+**Drawingboard**
+
+A web-based interactive drawing board built with React and HTML5 Canvas, featuring hand-drawn style shapes, freehand drawing, text input, element selection, resizing, panning, and undo/redo functionality.
+
+** Features**
+   Hand-drawn sketch style using RoughJS
+   Freehand pencil drawing with smooth strokes
+   Draw lines, rectangles, and text
+   Select, move, resize, and edit elements
+   Canvas panning using keyboard + mouse
+   Undo and Redo support
+   Real-time canvas re-rendering
+
+**Libraries Used**
+    roughjs
+    Creates sketchy, hand-drawn looking shapes.
+    perfect-freehand
+    Generates smooth, pressure-sensitive freehand strokes for the pencil tool.
+    HTML5 Canvas API
+
+Used for rendering all drawing elements.
+
+ Core Concepts Explained
 1. Imports and Constants
-
-roughjs: A library that makes shapes look hand-drawn (sketchy).
-
-perfect-freehand: A library that calculates smooth, pressure-sensitive paths for the pencil tool.
-
-generator: A RoughJS utility used to define the geometry of shapes before drawing them.
+roughjs is used to render sketch-style shapes.
+perfect-freehand calculates smooth paths for pencil drawings.
+generator from RoughJS defines shape geometry before drawing.
 
 2. Element Creation (createElement)
 
-This function is a "factory." Based on the tool selected (line, rectangle, pencil, text), it returns a JavaScript object containing coordinates and specific properties.
+A factory function that creates drawing elements based on the selected tool:
+Line / Rectangle → Stores start and end coordinates
+Pencil  Stores an array of points
+Text  Stores coordinates and a text string
 
-Pencil: Stores an array of points.
+Each element is stored as a JavaScript object in state.
 
-Text: Stores a text string.
-
-3. Hit Detection (Math Logic)
-
-These functions determine where the mouse is relative to a shape:
-
-nearPoint: Checks if the mouse is hovering over a specific point (like a corner) for resizing.
-
-onLine: Uses the mathematical formula for a line to check if the mouse is clicking "on" a line.
-
-positionWithinElement: This is the "brain" of selection. It checks if the mouse is:
-
-At a corner (to resize).
-
-Inside the shape (to move it).
-
-On the boundary.
+3. Hit Detection (Mathematical Logic)
+These functions determine the mouse position relative to an element:
+nearPoint
+Detects if the mouse is near a corner (used for resizing).
+onLine
+Uses a line distance formula to check if the mouse is on a line.
+positionWithinElement
+Determines whether the cursor is:
+On a corner (resize)
+Inside the shape (move)
+On the boundary
+This logic enables accurate selection and interaction.
 
 4. Selection and Coordination
-
-getElementAtPosition: Loops through all drawn elements to find which one you just clicked on.
-
-adjustElementCoordinates: If you draw a rectangle from bottom-right to top-left, this function flips the coordinates so x1, y1 is always the top-left and x2, y2 is the bottom-right.
-
-cursorForPosition: Changes the mouse cursor (e.g., to a diagonal arrow nwse-resize) when hovering over corners.
+getElementAtPosition
+Iterates through all elements to find the one under the cursor.
+adjustElementCoordinates
+Normalizes coordinates so:
+x1, y1 is always the top-left
+x2, y2 is always the bottom-right
+cursorForPosition
+Dynamically changes the mouse cursor (e.g., resize arrows).
 
 5. Custom Hooks
-
-useHistory: This manages Undo/Redo. It keeps an array of "snapshots" of your drawing. When you draw something, it adds a new snapshot. undo simply moves the index back one step.
-
-usePressedKeys: Tracks which keyboard keys are held down (used for the Spacebar to pan the canvas).
+useHistory
+Manages Undo / Redo functionality:
+Stores snapshots of element states
+Undo moves backward in history
+Redo moves forward
+usePressedKeys
+Tracks keyboard input:
+Used mainly for Spacebar panning
 
 6. Drawing Logic (drawElement)
+Responsible for rendering elements onto the canvas:
+Line / Rectangle
+Drawn using roughCanvas.draw()
+Pencil
+Uses getStroke() and Path2D for smooth freehand paths
+Text
+Rendered using canvas.fillText()
 
-This function actually paints on the HTML5 Canvas:
+7. Main Component (App)
+Handles all application state and events.
+State Management
+elements  All drawn items
+action  Current user action (draw, move, resize, pan, write)
+panOffset  Canvas translation values
 
-If it's a Line/Rect, it uses roughCanvas.draw().
+9. Rendering Loop (useLayoutEffect)
+Triggered whenever state changes:
+Clears the canvas
+Applies panning translation
+Redraws all elements
+This ensures smooth real-time rendering.
 
-If it's Pencil, it uses getStroke to create a smooth path and fills it using Path2D.
+9. Event Handlers
+handleMouseDown
+Selects an element (Selection tool)
+Creates a new element (Shape tools)
+Starts panning if Spacebar is pressed
+handleMouseMove
+Updates element size while drawing
+Moves elements during drag
+Resizes specific corners
+handleMouseUp
+Finalizes the action
+Fixes coordinates
+Resets the action state
 
-If it's Text, it uses the standard canvas fillText method.
+10. Text Handling
+Clicking creates a text element
+A hidden <textarea> appears at the click position
+On blur, text is saved to the element
+Textarea is removed after input
 
-7. The Main Component (App)
-
-This is where the state and events are managed.
-
-State Management:
-
-elements: The list of everything drawn.
-
-action: What the user is doing (drawing, moving, resizing, panning, writing, or none).
-
-panOffset: Stores how much the user has scrolled/panned the canvas.
-
-The Rendering Loop (useLayoutEffect):
-
-This runs every time a change happens. It:
-
-Clears the entire canvas.
-
-Applies the panOffset (translation).
-
-Loops through the elements array and calls drawElement for each one.
-
-Event Handlers:
-
-handleMouseDown:
-
-If the tool is Selection, it finds the element clicked.
-
-If the tool is a Shape, it creates a new element at the mouse position.
-
-If Spacebar is held, it starts Panning.
-
-handleMouseMove:
-
-If Drawing: Updates the width/height of the new shape.
-
-If Moving: Calculates the difference in mouse movement and updates element coordinates.
-
-If Resizing: Updates only the specific corner being dragged.
-
-handleMouseUp: Finalizes the action. It "fixes" coordinates (via adjustElementCoordinates) and sets the action back to none.
-
-8. Text Handling
-
-When the text tool is used:
-
-handleMouseDown creates a text element.
-
-The UI renders a hidden <textarea> exactly at that position.
-
-When the user clicks away (onBlur), the text from the textarea is saved into the element, and the textarea disappears.
-
-9. The JSX (The UI)
-
-Toolbar: Radio buttons to switch tools (Line, Pencil, etc.).
-
-Action Bar: Undo/Redo buttons.
-
-Canvas: The main drawing surface that fills the screen.
-
-Summary of Workflow
-
-User Clicks 
-→
-→
- handleMouseDown identifies tool or existing element.
-
-User Drags 
-→
-→
- handleMouseMove updates coordinates in state.
-
-State Changes 
-→
-→
- useLayoutEffect triggers.
-
-Canvas Redraws 
-→
-→
- Everything is cleared and repainted instantly, creating the illusion of smooth movement.
+12. User Interface (JSX)
+Toolbar
+Tool selection (Line, Rectangle, Pencil, Text, Select)
+Action Bar
+Undo / Redo buttons
+Canvas
+Full-screen drawing surface
