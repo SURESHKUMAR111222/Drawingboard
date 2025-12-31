@@ -2,7 +2,7 @@
 
 A web-based interactive drawing board built with React and HTML5 Canvas, featuring hand-drawn style shapes, freehand drawing, text input, element selection, resizing, panning, and undo/redo functionality.
 
-** Features**
+**Features**
    Hand-drawn sketch style using RoughJS
    Freehand pencil drawing with smooth strokes
    Draw lines, rectangles, and text
